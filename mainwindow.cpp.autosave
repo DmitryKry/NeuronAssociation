@@ -1,0 +1,226 @@
+#include "mainwindow.h"
+#include "ui_mainwindow.h"
+#include <qDebug>
+MainWindow::MainWindow(QWidget *parent) :
+    QMainWindow(parent),
+    ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+    scene = new QGraphicsScene(this);
+    resize(1920, 1080);
+    view = new QGraphicsView(scene, this);
+    setCentralWidget(view);
+    scene->setSceneRect(0, 0, 1920, 5000);
+    int stepArr = 300;
+    int index = 0;
+
+    readModel();
+
+    int bigArr = resArr[0].size();
+    for (int i = 1; i < resArr.size(); i++){
+        if (bigArr < resArr[i].size())
+            bigArr = resArr[i].size();
+    }
+    for (std::vector<std::vector<double>> elem : resArr) {
+        drawNeurons(elem.size(), 50 + stepArr * index++, bigArr == elem.size() ? 0 : (bigArr / elem.size()) * 1.6);
+    }
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::drawNeurons(int countEnter, int indent, double nextEnter, int plant)
+{
+    for (int i = 0, q = nextEnter == 0 ? plant : (plant * (nextEnter)) + plant; i < countEnter; i++, q += plant){
+        neyrons.push_back(new QGraphicsEllipseItem(indent, q, 5, 5));
+        setTemp.push_back(pointXY(indent, q));
+        if (setPointes.size()){
+            for (int j = 0; j < setPointes[setPointes.size() - 1].size(); j++){
+                pointXY positionOne = setPointes[setPointes.size() - 1][j];
+                pointXY positionTwo = setTemp[setTemp.size() - 1];
+                lines.push_back(new QGraphicsLineItem(positionOne.getX(), positionOne.getY(), positionTwo.getX(), positionTwo.getY()));
+                qDebug() << positionOne.getX() << " - " << positionOne.getY() << " - " << positionTwo.getX() << " - " << positionTwo.getY() << " - ";
+                lines[lines.size() - 1]->setPen(QPen(Qt::red, 1));
+                scene->addItem(lines[lines.size() - 1]);
+            }
+        }
+        neyrons[i]->setBrush(QBrush(Qt::white)); // Заливка
+        neyrons[i]->setPen(QPen(Qt::black, 2)); // Контур
+
+        scene->addItem(neyrons[i]);
+    }
+    setPointes.push_back(setTemp);
+    setTemp.clear();
+    neyronses.push_back(neyrons);
+    neyrons.clear();
+}
+
+void MainWindow::drawStrongNeurons(int countEnter, int indent, double nextEnter, int plant)
+{
+    for (int i = 0, q = nextEnter == 0 ? plant : (plant * (nextEnter)) + plant; i < countEnter; i++, q += plant){
+        neyrons.push_back(new QGraphicsEllipseItem(indent, q, 5, 5));
+        setTemp.push_back(pointXY(indent, q));
+        if (setPointes.size()){
+            for (int j = 0; j < setPointes[setPointes.size() - 1].size(); j++){
+                pointXY positionOne = setPointes[setPointes.size() - 1][j];
+                pointXY positionTwo = setTemp[setTemp.size() - 1];
+                lines.push_back(new QGraphicsLineItem(positionOne.getX(), positionOne.getY(), positionTwo.getX(), positionTwo.getY()));
+                qDebug() << positionOne.getX() << " - " << positionOne.getY() << " - " << positionTwo.getX() << " - " << positionTwo.getY() << " - ";
+                lines[lines.size() - 1]->setPen(QPen(Qt::red, 1));
+                scene->addItem(lines[lines.size() - 1]);
+            }
+        }
+        neyrons[i]->setBrush(QBrush(Qt::white)); // Заливка
+        neyrons[i]->setPen(QPen(Qt::black, 2)); // Контур
+
+        scene->addItem(neyrons[i]);
+    }
+    setPointes.push_back(setTemp);
+    setTemp.clear();
+    neyronses.push_back(neyrons);
+    neyrons.clear();
+}
+
+double MainWindow::inNumver(std::string another){
+    int numbers[10] = { '0', '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8', '9' };
+    double temp = 0;
+    int size = another.size();
+    bool negativ = false;
+    bool drob = false;
+    int part = 0;
+    for (char elem : another) {
+        if (elem == '-')
+            size--;
+        if (elem == '.')
+            size--;
+    }
+    for (int i = 0; i < another.size(); i++) {
+        if (another[i] == '-') {
+            negativ = true;
+            continue;
+        }
+        for (int j = 0; j < 10; j++) {
+            if (another[i] == '.') {
+                drob = true;
+                break;
+            }
+            if (another[i] == numbers[j]) {
+                if (drob == true) {
+                    temp += pow(10, -++part) * j;
+                    break;
+                }
+                else {
+                    temp += pow(10, (size - 2) - i) * j;
+                    break;
+                }
+            }
+        }
+    }
+    return negativ == true ? temp - (temp * 2) : temp;
+}
+
+void MainWindow::readModel(){
+    std::vector<std::vector<double>> examples;
+
+    std::string line = "";
+    std::string all = "";
+    char byte;
+    bool addArray = false;
+    bool roolListener = false;
+    bool cheakD = false;
+    int degree = 0, res = 0;
+    std::ifstream infile(source);  // Создание объекта для чтения
+    if (!infile.is_open()) {
+        qDebug() << "Ошибка открытия файла!" << endl;
+        return;
+    }
+    while (infile.get(byte)) {  // читаем побайтно
+        all += byte;
+        if (byte == '(' && !cheakD) {
+            roolListener = true;
+            continue;
+        }
+        if (byte == ')') {
+            if (line == "Dense") {
+                cheakD = true;
+                line = "";
+                roolListener = false;
+                continue;
+            }
+            else {
+                line = "";
+                roolListener = false;
+                continue;
+            }
+        }
+        if (cheakD && byte == '[' && addArray) {
+            examples.push_back(std::vector<double>());
+            roolListener = true;
+            continue;
+        }
+        if (cheakD && byte == '[') {
+            roolListener = true;
+            addArray = true;
+            continue;
+        }
+        if (byte == ']' && !roolListener && cheakD) {
+            //addArray = false;
+            cheakD = false;
+            line = "";
+            continue;
+        }
+        if (byte == ']' && roolListener && cheakD) {
+            examples[examples.size() - 1].push_back(inNumver(line));
+            line = "";
+            roolListener = false;
+            continue;
+        }
+        if ((byte == ',') && roolListener && cheakD) {
+            examples[examples.size() - 1].push_back(inNumver(line));
+            line = "";
+            continue;
+        }
+        if (byte == '[' && !roolListener) {
+            cheakD = false;
+            continue;
+        }
+        if (roolListener && byte != ' ')
+            line += byte;
+    }
+    std::vector<std::vector<double>> tempArr;
+    for (std::vector<double> elements : examples) {
+        if (elements.size() != 0)
+            tempArr.push_back(elements);
+        for (double element : elements) {
+            qDebug() << element << '\t';
+        }
+        qDebug() << endl;
+        if (elements.size() == 0) {
+            resArr.push_back(tempArr);
+            tempArr.clear();
+        }
+    }
+    resArr.push_back(tempArr);
+    qDebug() << "Кол-во матриц - " << resArr.size() << endl;
+    for (std::vector<std::vector<double>> elem : resArr) {
+        qDebug() << "Кол-во входов - " << elem.size() << endl;
+    }
+}
+
+void MainWindow::drawWeight(std::vector<std::vector<QGraphicsEllipseItem*>> neyronses)
+{
+    for (int i = 0; i < neyronses.size() - 1; i++){
+        for (int j = 0; j < neyronses[i].size(); j++){
+            for (int q = 0; q < neyronses[i + 1].size(); q++){
+                QPointF positionOne = neyronses[i][j]->pos();
+                QPointF positionTwo = neyronses[i + 1][q]->pos();
+                lines.push_back(new QGraphicsLineItem(positionOne.x(), positionOne.y(), positionTwo.x(), positionTwo.y()));
+                qDebug() << positionOne.x() << ' - ' << positionOne.y() << ' - ' << positionTwo.x() << ' - ' << positionTwo.y() << ' - ';
+                lines[lines.size() - 1]->setPen(QPen(Qt::red, 3));
+                scene->addItem(lines[lines.size() - 1]);
+            }
+        }
+    }
+}
