@@ -11,8 +11,9 @@ MainWindow::MainWindow(QWidget *parent) :
     view = new QGraphicsView(scene, this);
     setCentralWidget(view);
     scene->setSceneRect(0, 0, 1920, 5000);
-    int stepArr = 300;
+    int stepArr = 450;
     int index = 0;
+    coefficient = 5.5;
 
     readModel();
 
@@ -24,8 +25,9 @@ MainWindow::MainWindow(QWidget *parent) :
     for (std::vector<std::vector<double>> elem : resArr) {
         drawNeurons(elem.size(), 50 + stepArr * index++, bigArr == elem.size() ? 0 : (bigArr / elem.size()) * 1.6);
     }*/
+
     for (std::vector<std::vector<double>> elem : resArr) {
-        drawStrongNeurons(elem, 50 + stepArr * index++, bigArr == elem.size() ? 0 : (bigArr / elem.size()) * 1.6);
+        drawNeurons(elem, 50 + stepArr * index++, bigArr == elem.size() ? 0 : (bigArr / elem.size()) * coefficient);
     }
     for (std::vector<pointXY> tempElem : setPointes){
         for (pointXY tempPoint : tempElem){
@@ -53,7 +55,7 @@ void MainWindow::drawNeurons(std::vector<std::vector<double>> currentLayer, int 
                 pointXY positionTwo = setTemp[setTemp.size() - 1];
                 lines.push_back(new QGraphicsLineItem(positionOne.getX(), positionOne.getY(), positionTwo.getX(), positionTwo.getY()));
                 //qDebug() << positionOne.getX() << " - " << positionOne.getY() << " - " << positionTwo.getX() << " - " << positionTwo.getY() << " - ";
-                lines[lines.size() - 1]->setPen(QPen(Qt::red, 1));
+                lines[lines.size() - 1]->setPen(QPen(Qt::black, 1));
                 scene->addItem(lines[lines.size() - 1]);
             }
         }
@@ -224,7 +226,9 @@ void MainWindow::drawWeight()
                     maxIndex = q;
                 }
             }
-            scene->addItem(new QGraphicsLineItem(setPointes[i][j].getX(), setPointes[i][j].getY(), setPointes[i + 1][maxIndex].getX(), setPointes[i + 1][maxIndex].getY()));
+            QGraphicsLineItem* StrongLint = new QGraphicsLineItem(setPointes[i][j].getX(), setPointes[i][j].getY(), setPointes[i + 1][maxIndex].getX(), setPointes[i + 1][maxIndex].getY());
+            scene->addItem(StrongLint);
+            StrongLint->setPen(QPen(Qt::yellow, 2));
         }
     }
 }
