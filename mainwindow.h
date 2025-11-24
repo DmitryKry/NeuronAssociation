@@ -51,8 +51,9 @@ public:
     };
 
 private:
-    void drawNeurons(int countEnter, int indent, double nextEnter = 0, int plant = 25);
-    void drawWeight(std::vector<std::vector<QGraphicsEllipseItem*>> neyronses);
+    void drawNeurons(std::vector<std::vector<double>> currentLayer, int indent, double nextEnter = 0, int plant = 25);
+    void drawWeight();
+    void drawStrongNeurons(std::vector<std::vector<double>> currentLaye, int indent, double nextEnter = 0, int plant = 25);
     std::string source = "model_weights.txt";
     void readModel();
     double inNumver(std::string another);
@@ -67,6 +68,8 @@ private:
     std::vector<std::vector<pointXY>> setPointes;
     std::vector<pointXY> setTemp;
     std::vector<std::vector<std::vector<double>>> resArr;
+
+    bool exitWhen = false;
 };
 
 

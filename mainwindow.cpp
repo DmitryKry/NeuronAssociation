@@ -20,10 +20,21 @@ MainWindow::MainWindow(QWidget *parent) :
     for (int i = 1; i < resArr.size(); i++){
         if (bigArr < resArr[i].size())
             bigArr = resArr[i].size();
-    }
+    }/*
     for (std::vector<std::vector<double>> elem : resArr) {
         drawNeurons(elem.size(), 50 + stepArr * index++, bigArr == elem.size() ? 0 : (bigArr / elem.size()) * 1.6);
+    }*/
+    for (std::vector<std::vector<double>> elem : resArr) {
+        drawStrongNeurons(elem, 50 + stepArr * index++, bigArr == elem.size() ? 0 : (bigArr / elem.size()) * 1.6);
     }
+    for (std::vector<pointXY> tempElem : setPointes){
+        for (pointXY tempPoint : tempElem){
+            qDebug() << tempPoint.getX() << ' ' << tempPoint.getY() ;
+        }
+        qDebug() << endl;
+    }
+    drawWeight();
+
 }
 
 MainWindow::~MainWindow()
@@ -31,9 +42,9 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::drawNeurons(int countEnter, int indent, double nextEnter, int plant)
+void MainWindow::drawNeurons(std::vector<std::vector<double>> currentLayer, int indent, double nextEnter, int plant)
 {
-    for (int i = 0, q = nextEnter == 0 ? plant : (plant * (nextEnter)) + plant; i < countEnter; i++, q += plant){
+    for (int i = 0, q = nextEnter == 0 ? plant : (plant * (nextEnter)) + plant; i < currentLayer.size(); i++, q += plant){
         neyrons.push_back(new QGraphicsEllipseItem(indent, q, 5, 5));
         setTemp.push_back(pointXY(indent, q));
         if (setPointes.size()){
@@ -41,11 +52,29 @@ void MainWindow::drawNeurons(int countEnter, int indent, double nextEnter, int p
                 pointXY positionOne = setPointes[setPointes.size() - 1][j];
                 pointXY positionTwo = setTemp[setTemp.size() - 1];
                 lines.push_back(new QGraphicsLineItem(positionOne.getX(), positionOne.getY(), positionTwo.getX(), positionTwo.getY()));
-                qDebug() << positionOne.getX() << " - " << positionOne.getY() << " - " << positionTwo.getX() << " - " << positionTwo.getY() << " - ";
+                //qDebug() << positionOne.getX() << " - " << positionOne.getY() << " - " << positionTwo.getX() << " - " << positionTwo.getY() << " - ";
                 lines[lines.size() - 1]->setPen(QPen(Qt::red, 1));
                 scene->addItem(lines[lines.size() - 1]);
             }
         }
+        neyrons[i]->setBrush(QBrush(Qt::white)); // Заливка
+        neyrons[i]->setPen(QPen(Qt::black, 2)); // Контур
+
+        scene->addItem(neyrons[i]);
+    }
+    setPointes.push_back(setTemp);
+    qDebug() << "setPointes.size() - " << setPointes.size() << endl;
+    setTemp.clear();
+    neyronses.push_back(neyrons);
+    neyrons.clear();
+}
+
+void MainWindow::drawStrongNeurons(std::vector<std::vector<double>> currentLayer, int indent, double nextEnter, int plant)
+{
+    for (int i = 0, q = nextEnter == 0 ? plant : (plant * (nextEnter)) + plant; i < currentLayer.size(); i++, q += plant){
+        neyrons.push_back(new QGraphicsEllipseItem(indent, q, 5, 5));
+        setTemp.push_back(pointXY(indent, q));
+
         neyrons[i]->setBrush(QBrush(Qt::white)); // Заливка
         neyrons[i]->setPen(QPen(Qt::black, 2)); // Контур
 
@@ -183,18 +212,19 @@ void MainWindow::readModel(){
     }
 }
 
-void MainWindow::drawWeight(std::vector<std::vector<QGraphicsEllipseItem*>> neyronses)
+void MainWindow::drawWeight()
 {
-    for (int i = 0; i < neyronses.size() - 1; i++){
-        for (int j = 0; j < neyronses[i].size(); j++){
-            for (int q = 0; q < neyronses[i + 1].size(); q++){
-                QPointF positionOne = neyronses[i][j]->pos();
-                QPointF positionTwo = neyronses[i + 1][q]->pos();
-                lines.push_back(new QGraphicsLineItem(positionOne.x(), positionOne.y(), positionTwo.x(), positionTwo.y()));
-                qDebug() << positionOne.x() << ' - ' << positionOne.y() << ' - ' << positionTwo.x() << ' - ' << positionTwo.y() << ' - ';
-                lines[lines.size() - 1]->setPen(QPen(Qt::red, 3));
-                scene->addItem(lines[lines.size() - 1]);
+    for (int i = 0; i < resArr.size() - 1; i++){
+        for (int j = 0; j < resArr[i].size(); j++){
+            double maxPoint = resArr[i][j][0];
+            int maxIndex = 0;
+            for (int q = 0; q < resArr[i][j].size(); q++){
+                if (maxPoint < resArr[i][j][q]){
+                    maxPoint = resArr[i][j][q];
+                    maxIndex = q;
+                }
             }
+            scene->addItem(new QGraphicsLineItem(setPointes[i][j].getX(), setPointes[i][j].getY(), setPointes[i + 1][maxIndex].getX(), setPointes[i + 1][maxIndex].getY()));
         }
     }
 }
