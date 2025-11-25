@@ -15,7 +15,8 @@ MainWindow::MainWindow(QWidget *parent) :
     int index = 0;
     coefficient = 5.5;
 
-    resArr = readModel();
+    resArr = readModel("model_weights_non_unickTwo.txt");
+
 
     int bigArr = resArr[0].size();
     for (int i = 1; i < resArr.size(); i++){
@@ -35,8 +36,14 @@ MainWindow::MainWindow(QWidget *parent) :
         }
         qDebug() << endl;
     }
+
     std::vector<QGraphicsLineItem*> maitrisOne = drawWeight(resArr);
 
+    resMatrix = readModel("model_weights_non_unick.txt");
+    std::vector<QGraphicsLineItem*> maitrisTwo = drawWeight(resMatrix);
+    for (QGraphicsLineItem* item : maitrisTwo)
+        item->setPen(QPen(Qt::red, 2));
+    compare(resMatrix, resArr, maitrisTwo, maitrisOne);
 }
 
 MainWindow::~MainWindow()
@@ -237,3 +244,32 @@ std::vector<QGraphicsLineItem*> MainWindow::drawWeight(std::vector<std::vector<s
     }
     return strongLines;
 }
+
+
+void MainWindow::compare(std::vector<std::vector<std::vector<double>>> MatrixOne, std::vector<std::vector<std::vector<double>>> MatrixTwo,
+                         std::vector<QGraphicsLineItem*> maitrisOne, std::vector<QGraphicsLineItem*> maitrisTwo){
+    for (QGraphicsLineItem* item : maitrisOne)
+        qDebug() << item << ' ';
+    qDebug() << '\n';
+    qDebug() << 'maitrisOne.size() - ' << maitrisOne.size();
+    qDebug() << '\n';
+    if (MatrixOne.size() != MatrixTwo.size() ||
+            MatrixOne[0].size() != MatrixTwo[0].size() ||
+            MatrixOne[0][0].size() != MatrixTwo[0][0].size()) {
+            qDebug() << "Матрицы имеют разные размеры!" << endl;
+            return;
+        }
+    for (size_t i = 0; i < MatrixOne.size(); ++i) {
+        for (size_t j = 0; j < MatrixOne[i].size(); ++j) {
+            for (size_t k = 0; k < MatrixOne[i][j].size(); ++k) {
+                if (MatrixOne[i][j][k] == MatrixTwo[i][j][k]) {
+                    qDebug() << "Совпадение в индексах [" << i << "][" << j << "][" << k
+                              << "]: значение = " << MatrixOne[i][j][k] << endl;
+                    maitrisOne[i * j * k]->setPen(QPen(Qt::blue, 2));
+                }
+            }
+        }
+    }
+}
+
+
