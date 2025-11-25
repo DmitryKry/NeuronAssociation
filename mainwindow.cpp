@@ -35,7 +35,7 @@ MainWindow::MainWindow(QWidget *parent) :
         }
         qDebug() << endl;
     }
-    drawWeight();
+    std::vector<QGraphicsLineItem*> maitrisOne = drawWeight(resArr);
 
 }
 
@@ -216,21 +216,24 @@ std::vector<std::vector<std::vector<double>>> MainWindow::readModel(std::string 
     return resMatrix;
 }
 
-void MainWindow::drawWeight()
+std::vector<QGraphicsLineItem*> MainWindow::drawWeight(std::vector<std::vector<std::vector<double>>> anotherMatrix)
 {
-    for (int i = 0; i < resArr.size() - 1; i++){
-        for (int j = 0; j < resArr[i].size(); j++){
-            double maxPoint = resArr[i][j][0];
+    std::vector<QGraphicsLineItem*> strongLines;
+    for (int i = 0; i < anotherMatrix.size() - 1; i++){
+        for (int j = 0; j < anotherMatrix[i].size(); j++){
+            double maxPoint = anotherMatrix[i][j][0];
             int maxIndex = 0;
-            for (int q = 0; q < resArr[i][j].size(); q++){
-                if (maxPoint < resArr[i][j][q]){
-                    maxPoint = resArr[i][j][q];
+            for (int q = 0; q < anotherMatrix[i][j].size(); q++){
+                if (maxPoint < anotherMatrix[i][j][q]){
+                    maxPoint = anotherMatrix[i][j][q];
                     maxIndex = q;
                 }
             }
             QGraphicsLineItem* StrongLint = new QGraphicsLineItem(setPointes[i][j].getX(), setPointes[i][j].getY(), setPointes[i + 1][maxIndex].getX(), setPointes[i + 1][maxIndex].getY());
             scene->addItem(StrongLint);
             StrongLint->setPen(QPen(Qt::yellow, 2));
+            strongLines.push_back(StrongLint);
         }
     }
+    return strongLines;
 }

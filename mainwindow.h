@@ -52,7 +52,7 @@ public:
 
 private:
     void drawNeurons(std::vector<std::vector<double>> currentLayer, int indent, double nextEnter = 0, int plant = 25);
-    void drawWeight();
+    std::vector<QGraphicsLineItem*> drawWeight(std::vector<std::vector<std::vector<double>>> anotherMatrix);
     void drawStrongNeurons(std::vector<std::vector<double>> currentLaye, int indent, double nextEnter = 0, int plant = 25);
 
     std::vector<std::vector<std::vector<double>>> readModel(std::string amotherSource = "model_weights_unick.txt");
