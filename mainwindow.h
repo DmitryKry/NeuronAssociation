@@ -54,10 +54,11 @@ private:
     void drawNeurons(std::vector<std::vector<double>> currentLayer, int indent, double nextEnter = 0, int plant = 25);
     void drawWeight();
     void drawStrongNeurons(std::vector<std::vector<double>> currentLaye, int indent, double nextEnter = 0, int plant = 25);
-    std::string source = "model_weights_unick.txt";
-    void readModel();
+
+    std::vector<std::vector<std::vector<double>>> readModel(std::string amotherSource = "model_weights_unick.txt");
     double inNumver(std::string another);
     void clearWeight();
+
     Ui::MainWindow *ui;
     QGraphicsScene* scene;
     QGraphicsView* view;

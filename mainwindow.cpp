@@ -15,7 +15,7 @@ MainWindow::MainWindow(QWidget *parent) :
     int index = 0;
     coefficient = 5.5;
 
-    readModel();
+    resArr = readModel();
 
     int bigArr = resArr[0].size();
     for (int i = 1; i < resArr.size(); i++){
@@ -126,9 +126,9 @@ double MainWindow::inNumver(std::string another){
     return negativ == true ? temp - (temp * 2) : temp;
 }
 
-void MainWindow::readModel(){
+std::vector<std::vector<std::vector<double>>> MainWindow::readModel(std::string amotherSource){
     std::vector<std::vector<double>> examples;
-
+    std::vector<std::vector<std::vector<double>>> resMatrix;
     std::string line = "";
     std::string all = "";
     char byte;
@@ -136,82 +136,84 @@ void MainWindow::readModel(){
     bool roolListener = false;
     bool cheakD = false;
     int degree = 0, res = 0;
-    std::ifstream infile(source);  // Создание объекта для чтения
+    std::ifstream infile(amotherSource);  // Создание объекта для чтения
     if (!infile.is_open()) {
         qDebug() << "Ошибка открытия файла!" << endl;
-        return;
     }
-    while (infile.get(byte)) {  // читаем побайтно
-        all += byte;
-        if (byte == '(' && !cheakD) {
-            roolListener = true;
-            continue;
-        }
-        if (byte == ')') {
-            if (line == "Dense") {
-                cheakD = true;
+    else{
+        while (infile.get(byte)) {  // читаем побайтно
+            all += byte;
+            if (byte == '(' && !cheakD) {
+                roolListener = true;
+                continue;
+            }
+            if (byte == ')') {
+                if (line == "Dense") {
+                    cheakD = true;
+                    line = "";
+                    roolListener = false;
+                    continue;
+                }
+                else {
+                    line = "";
+                    roolListener = false;
+                    continue;
+                }
+            }
+            if (cheakD && byte == '[' && addArray) {
+                examples.push_back(std::vector<double>());
+                roolListener = true;
+                continue;
+            }
+            if (cheakD && byte == '[') {
+                roolListener = true;
+                addArray = true;
+                continue;
+            }
+            if (byte == ']' && !roolListener && cheakD) {
+                //addArray = false;
+                cheakD = false;
+                line = "";
+                continue;
+            }
+            if (byte == ']' && roolListener && cheakD) {
+                examples[examples.size() - 1].push_back(inNumver(line));
                 line = "";
                 roolListener = false;
                 continue;
             }
-            else {
+            if ((byte == ',') && roolListener && cheakD) {
+                examples[examples.size() - 1].push_back(inNumver(line));
                 line = "";
-                roolListener = false;
                 continue;
             }
+            if (byte == '[' && !roolListener) {
+                cheakD = false;
+                continue;
+            }
+            if (roolListener && byte != ' ')
+                line += byte;
         }
-        if (cheakD && byte == '[' && addArray) {
-            examples.push_back(std::vector<double>());
-            roolListener = true;
-            continue;
+        std::vector<std::vector<double>> tempArr;
+        for (std::vector<double> elements : examples) {
+            if (elements.size() != 0)
+                tempArr.push_back(elements);
+            for (double element : elements) {
+                qDebug() << element << '\t';
+            }
+            qDebug() << endl;
+            if (elements.size() == 0) {
+                resMatrix.push_back(tempArr);
+                tempArr.clear();
+            }
         }
-        if (cheakD && byte == '[') {
-            roolListener = true;
-            addArray = true;
-            continue;
-        }
-        if (byte == ']' && !roolListener && cheakD) {
-            //addArray = false;
-            cheakD = false;
-            line = "";
-            continue;
-        }
-        if (byte == ']' && roolListener && cheakD) {
-            examples[examples.size() - 1].push_back(inNumver(line));
-            line = "";
-            roolListener = false;
-            continue;
-        }
-        if ((byte == ',') && roolListener && cheakD) {
-            examples[examples.size() - 1].push_back(inNumver(line));
-            line = "";
-            continue;
-        }
-        if (byte == '[' && !roolListener) {
-            cheakD = false;
-            continue;
-        }
-        if (roolListener && byte != ' ')
-            line += byte;
-    }
-    std::vector<std::vector<double>> tempArr;
-    for (std::vector<double> elements : examples) {
-        if (elements.size() != 0)
-            tempArr.push_back(elements);
-        for (double element : elements) {
-            qDebug() << element << '\t';
-        }
-        qDebug() << endl;
-        if (elements.size() == 0) {
-            resArr.push_back(tempArr);
-            tempArr.clear();
+        resMatrix.push_back(tempArr);
+        qDebug() << "Кол-во матриц - " << resMatrix.size() << endl;
+        for (std::vector<std::vector<double>> elem : resMatrix) {
+            qDebug() << "Кол-во входов - " << elem.size() << endl;
         }
     }
-    resArr.push_back(tempArr);
-    qDebug() << "Кол-во матриц - " << resArr.size() << endl;
-    for (std::vector<std::vector<double>> elem : resArr) {
-        qDebug() << "Кол-во входов - " << elem.size() << endl;
-    }
+    return resMatrix;
 }
 
 void MainWindow::drawWeight()
