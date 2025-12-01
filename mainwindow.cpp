@@ -13,9 +13,9 @@ MainWindow::MainWindow(QWidget *parent) :
     scene->setSceneRect(0, 0, 1920, 5000);
     int stepArr = 450;
     int index = 0;
-    coefficient = 5.5;
+    coefficient = 3;
 
-    resArr = readModel("model_weights_non_unickTwo.txt");
+    resArr = readModel("simpleModelFirst.txt");
 
 
     int bigArr = resArr[0].size();
@@ -39,7 +39,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     std::vector<QGraphicsLineItem*> maitrisOne = drawWeight(resArr);
 
-    resMatrix = readModel("model_weights_non_unick.txt");
+    resMatrix = readModel("square_detector_model_29.h5_weights.txt");
     std::vector<QGraphicsLineItem*> maitrisTwo = drawWeight(resMatrix);
     for (QGraphicsLineItem* item : maitrisTwo)
         item->setPen(QPen(Qt::red, 2));
@@ -96,7 +96,7 @@ void MainWindow::drawStrongNeurons(std::vector<std::vector<double>> currentLayer
 }
 
 double MainWindow::inNumver(std::string another){
-    int numbers[10] = { '0', '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8', '9' };
+    char numbers[10] = { '0', '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8', '9' };
     double temp = 0;
     int size = another.size();
     bool negativ = false;
