@@ -51,6 +51,7 @@ public:
     };
 
 private:
+    int stepPlant = 25;
     void drawNeurons(QGraphicsScene* anotherScene, std::vector<std::vector<double>> currentLayer, int indent, double nextEnter = 0, int plant = 25);
     std::vector<QGraphicsLineItem*> drawWeight(QGraphicsScene* anotherScene, std::vector<std::vector<std::vector<double>>> anotherMatrix, bool bothChek = false);
     void drawStrongNeurons(std::vector<std::vector<double>> currentLaye, int indent, double nextEnter = 0, int plant = 25);

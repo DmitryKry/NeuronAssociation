@@ -276,18 +276,20 @@ std::vector<QGraphicsLineItem*> MainWindow::drawWeight(QGraphicsScene* anotherSc
         }
     }
     else {
-        for (int i = anotherMatrix.size() - 2; i >= 0; i--){
+        for (int i = 0; i < anotherMatrix.size() - 1; i++){
             for (int j = anotherMatrix[i].size() - 1; j >= 0; j--){
                 double maxPoint = anotherMatrix[i][j][0];
                 int maxIndex = 0;
-                for (int q = anotherMatrix[i][j].size() - 1; q >= 0; q--){
+                for (int q = 0; q < anotherMatrix[i][j].size(); q++){
                     if (maxPoint < anotherMatrix[i][j][q]){
                         maxPoint = anotherMatrix[i][j][q];
                         maxIndex = q;
                     }
                 }
                 QGraphicsLineItem* StrongLint;
-                StrongLint = new QGraphicsLineItem(setPointes[i][j].getX(), setPointes[i][j].getY() * 2, setPointes[i + 1][maxIndex].getX(), setPointes[i + 1][maxIndex].getY() * 2);
+                int tempY = maxIndex;
+                StrongLint = new QGraphicsLineItem(setPointes[i][j].getX(), setPointes[i][j].getY() + (stepPlant * anotherMatrix[i].size()),
+                                                   setPointes[i + 1][maxIndex].getX(), setPointes[i + 1][maxIndex].getY() + (stepPlant * anotherMatrix[i][j].size()));
                 anotherScene->addItem(StrongLint);
                 StrongLint->setPen(QPen(Qt::yellow, 2));
                 strongLines.push_back(StrongLint);
