@@ -51,8 +51,8 @@ public:
     };
 
 private:
-    void drawNeurons(std::vector<std::vector<double>> currentLayer, int indent, double nextEnter = 0, int plant = 25);
-    std::vector<QGraphicsLineItem*> drawWeight(std::vector<std::vector<std::vector<double>>> anotherMatrix);
+    void drawNeurons(QGraphicsScene* anotherScene, std::vector<std::vector<double>> currentLayer, int indent, double nextEnter = 0, int plant = 25);
+    std::vector<QGraphicsLineItem*> drawWeight(QGraphicsScene* anotherScene, std::vector<std::vector<std::vector<double>>> anotherMatrix, bool bothChek = false);
     void drawStrongNeurons(std::vector<std::vector<double>> currentLaye, int indent, double nextEnter = 0, int plant = 25);
     void compare(std::vector<std::vector<std::vector<double>>> MatrixOne, std::vector<std::vector<std::vector<double>>> MatrixTwo,
                  std::vector<QGraphicsLineItem*> maitrisOne, std::vector<QGraphicsLineItem*> maitrisTwo);
@@ -62,6 +62,7 @@ private:
 
     Ui::MainWindow *ui;
     QGraphicsScene* scene;
+    QGraphicsScene *secondScene;
     QGraphicsView* view;
     int step = 25;
     std::vector<QGraphicsEllipseItem*> neyrons;

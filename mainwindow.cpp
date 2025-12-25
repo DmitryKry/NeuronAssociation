@@ -10,11 +10,19 @@ MainWindow::MainWindow(QWidget *parent) :
     resize(1920, 1080);
     view = new QGraphicsView(scene, this);
     setCentralWidget(view);
+    setWindowTitle("Оригинальная нейронная модель");
     scene->setSceneRect(0, 0, 1920, 5000);
-    int stepArr = 450;
+    const int stepArr = 450;
     int index = 0;
     coefficient = 3;
+        QMainWindow *secondWindow = new QMainWindow();
+        secondWindow->setWindowTitle("Объедининение нейронных моделей");
+        secondWindow->resize(1920, 1080);
 
+        secondScene = new QGraphicsScene(secondWindow);
+        QGraphicsView *secondView = new QGraphicsView(secondScene, secondWindow);
+        secondWindow->setCentralWidget(secondView);
+        secondScene->setSceneRect(0, 0, 1920, 5000);
     resArr = readModel("simpleModelFirst.txt");
 
 
@@ -28,7 +36,8 @@ MainWindow::MainWindow(QWidget *parent) :
     }*/
 
     for (std::vector<std::vector<double>> elem : resArr) {
-        drawNeurons(elem, 50 + stepArr * index++, bigArr == elem.size() ? 0 : (bigArr / elem.size()) * coefficient);
+        int ras = bigArr == elem.size() ? 0 : ((bigArr - elem.size()) / 2);
+        drawNeurons(scene, elem, 50 + stepArr * index++, ras);
     }
     for (std::vector<pointXY> tempElem : setPointes){
         for (pointXY tempPoint : tempElem){
@@ -37,13 +46,34 @@ MainWindow::MainWindow(QWidget *parent) :
         qDebug() << endl;
     }
 
-    std::vector<QGraphicsLineItem*> maitrisOne = drawWeight(resArr);
+    std::vector<QGraphicsLineItem*> maitrisOne = drawWeight(scene, resArr);
 
     resMatrix = readModel("square_detector_model_29.h5_weights.txt");
-    std::vector<QGraphicsLineItem*> maitrisTwo = drawWeight(resMatrix);
+    std::vector<QGraphicsLineItem*> maitrisTwo = drawWeight(scene, resMatrix);
     for (QGraphicsLineItem* item : maitrisTwo)
         item->setPen(QPen(Qt::red, 2));
     compare(resMatrix, resArr, maitrisTwo, maitrisOne);
+    index = 0;
+    bigArr *= 2;
+    setPointes.clear();
+    for (int i = 0; i < resArr.size(); i++) {
+        std::vector<std::vector<double>> bothMatrix;
+
+        for (std::vector<double> poDelem : resArr[i])
+            bothMatrix.push_back(poDelem);
+
+        for (std::vector<double> poDelem : resMatrix[i])
+            bothMatrix.push_back(poDelem);
+        int sizeBoth = bothMatrix.size();
+        int ras = bigArr == bothMatrix.size() ? 0 : ((bigArr - bothMatrix.size()) / 2);
+        drawNeurons(secondScene, bothMatrix, 50 + stepArr * index++, ras);
+    }
+    drawWeight(secondScene, resArr);
+
+    std::vector<QGraphicsLineItem*> BothMaitrix = drawWeight(secondScene, resMatrix, true);
+    for (QGraphicsLineItem* item : BothMaitrix)
+        item->setPen(QPen(Qt::red, 2));
+    secondWindow->show();
 }
 
 MainWindow::~MainWindow()
@@ -51,7 +81,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::drawNeurons(std::vector<std::vector<double>> currentLayer, int indent, double nextEnter, int plant)
+void MainWindow::drawNeurons(QGraphicsScene* anotherScene, std::vector<std::vector<double>> currentLayer, int indent, double nextEnter, int plant)
 {
     for (int i = 0, q = nextEnter == 0 ? plant : (plant * (nextEnter)) + plant; i < currentLayer.size(); i++, q += plant){
         neyrons.push_back(new QGraphicsEllipseItem(indent, q, 5, 5));
@@ -63,13 +93,13 @@ void MainWindow::drawNeurons(std::vector<std::vector<double>> currentLayer, int 
                 lines.push_back(new QGraphicsLineItem(positionOne.getX(), positionOne.getY(), positionTwo.getX(), positionTwo.getY()));
                 //qDebug() << positionOne.getX() << " - " << positionOne.getY() << " - " << positionTwo.getX() << " - " << positionTwo.getY() << " - ";
                 lines[lines.size() - 1]->setPen(QPen(Qt::black, 1));
-                scene->addItem(lines[lines.size() - 1]);
+                anotherScene->addItem(lines[lines.size() - 1]);
             }
         }
         neyrons[i]->setBrush(QBrush(Qt::white)); // Заливка
         neyrons[i]->setPen(QPen(Qt::black, 2)); // Контур
 
-        scene->addItem(neyrons[i]);
+        anotherScene->addItem(neyrons[i]);
     }
     setPointes.push_back(setTemp);
     qDebug() << "setPointes.size() - " << setPointes.size() << endl;
@@ -223,25 +253,48 @@ std::vector<std::vector<std::vector<double>>> MainWindow::readModel(std::string 
     return resMatrix;
 }
 
-std::vector<QGraphicsLineItem*> MainWindow::drawWeight(std::vector<std::vector<std::vector<double>>> anotherMatrix)
+std::vector<QGraphicsLineItem*> MainWindow::drawWeight(QGraphicsScene* anotherScene, std::vector<std::vector<std::vector<double>>> anotherMatrix, bool bothChek)
 {
     std::vector<QGraphicsLineItem*> strongLines;
-    for (int i = 0; i < anotherMatrix.size() - 1; i++){
-        for (int j = 0; j < anotherMatrix[i].size(); j++){
-            double maxPoint = anotherMatrix[i][j][0];
-            int maxIndex = 0;
-            for (int q = 0; q < anotherMatrix[i][j].size(); q++){
-                if (maxPoint < anotherMatrix[i][j][q]){
-                    maxPoint = anotherMatrix[i][j][q];
-                    maxIndex = q;
+    if (!bothChek){
+        for (int i = 0; i < anotherMatrix.size() - 1; i++){
+            for (int j = 0; j < anotherMatrix[i].size(); j++){
+                double maxPoint = anotherMatrix[i][j][0];
+                int maxIndex = 0;
+                for (int q = 0; q < anotherMatrix[i][j].size(); q++){
+                    if (maxPoint < anotherMatrix[i][j][q]){
+                        maxPoint = anotherMatrix[i][j][q];
+                        maxIndex = q;
+                    }
                 }
+                QGraphicsLineItem* StrongLint;
+                StrongLint = new QGraphicsLineItem(setPointes[i][j].getX(), setPointes[i][j].getY(), setPointes[i + 1][maxIndex].getX(), setPointes[i + 1][maxIndex].getY());
+                anotherScene->addItem(StrongLint);
+                StrongLint->setPen(QPen(Qt::yellow, 2));
+                strongLines.push_back(StrongLint);
             }
-            QGraphicsLineItem* StrongLint = new QGraphicsLineItem(setPointes[i][j].getX(), setPointes[i][j].getY(), setPointes[i + 1][maxIndex].getX(), setPointes[i + 1][maxIndex].getY());
-            scene->addItem(StrongLint);
-            StrongLint->setPen(QPen(Qt::yellow, 2));
-            strongLines.push_back(StrongLint);
         }
     }
+    else {
+        for (int i = anotherMatrix.size() - 2; i >= 0; i--){
+            for (int j = anotherMatrix[i].size() - 1; j >= 0; j--){
+                double maxPoint = anotherMatrix[i][j][0];
+                int maxIndex = 0;
+                for (int q = anotherMatrix[i][j].size() - 1; q >= 0; q--){
+                    if (maxPoint < anotherMatrix[i][j][q]){
+                        maxPoint = anotherMatrix[i][j][q];
+                        maxIndex = q;
+                    }
+                }
+                QGraphicsLineItem* StrongLint;
+                StrongLint = new QGraphicsLineItem(setPointes[i][j].getX(), setPointes[i][j].getY() * 2, setPointes[i + 1][maxIndex].getX(), setPointes[i + 1][maxIndex].getY() * 2);
+                anotherScene->addItem(StrongLint);
+                StrongLint->setPen(QPen(Qt::yellow, 2));
+                strongLines.push_back(StrongLint);
+            }
+        }
+    }
+
     return strongLines;
 }
 
