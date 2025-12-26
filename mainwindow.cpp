@@ -75,7 +75,15 @@ MainWindow::MainWindow(QWidget *parent) :
         item->setPen(QPen(Qt::red, 2));
     secondWindow->show();
 }
-
+bool MainWindow::dopValue::features = false;
+bool MainWindow::dopValue::matrix = false;
+bool MainWindow::dopValue::input_tensor = false;
+bool MainWindow::dopValue::conv_filters = false;
+bool MainWindow::dopValue::exit = false;
+bool MainWindow::dopValue::weights = false;
+bool MainWindow::dopValue::bias = false;
+bool MainWindow::dopValue::accessLister = false;
+bool MainWindow::dopValue::closed = false;
 MainWindow::~MainWindow()
 {
     delete ui;
@@ -125,18 +133,22 @@ void MainWindow::drawStrongNeurons(std::vector<std::vector<double>> currentLayer
     neyrons.clear();
 }
 
-double MainWindow::inNumver(std::string another){
+double MainWindow::inNumber(std::string another) {
     char numbers[10] = { '0', '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8', '9' };
     double temp = 0;
-    int size = another.size();
+    int size = 0;
     bool negativ = false;
     bool drob = false;
     int part = 0;
     for (char elem : another) {
         if (elem == '-')
-            size--;
+            continue;
         if (elem == '.')
-            size--;
+            break;
+        size++;
+    }
+    if (another[0] != '-') {
+        size--;
     }
     for (int i = 0; i < another.size(); i++) {
         if (another[i] == '-') {
@@ -154,13 +166,24 @@ double MainWindow::inNumver(std::string another){
                     break;
                 }
                 else {
-                    temp += pow(10, (size - 2) - i) * j;
+                    temp += pow(10, (size) - i) * j;
                     break;
                 }
             }
         }
     }
     return negativ == true ? temp - (temp * 2) : temp;
+}
+
+bool MainWindow::isNumber(char other) {
+    char numbers[10] = { '0', '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8', '9' };
+    int i = 0;
+    while (i < 10) {
+        if (other == numbers[i++]) {
+            return true;
+        }
+    }
+    return false;
 }
 
 std::vector<std::vector<std::vector<double>>> MainWindow::readModel(std::string amotherSource){
@@ -214,13 +237,13 @@ std::vector<std::vector<std::vector<double>>> MainWindow::readModel(std::string 
                 continue;
             }
             if (byte == ']' && roolListener && cheakD) {
-                examples[examples.size() - 1].push_back(inNumver(line));
+                examples[examples.size() - 1].push_back(inNumber(line));
                 line = "";
                 roolListener = false;
                 continue;
             }
             if ((byte == ',') && roolListener && cheakD) {
-                examples[examples.size() - 1].push_back(inNumver(line));
+                examples[examples.size() - 1].push_back(inNumber(line));
                 line = "";
                 continue;
             }
@@ -299,6 +322,208 @@ std::vector<QGraphicsLineItem*> MainWindow::drawWeight(QGraphicsScene* anotherSc
 
     return strongLines;
 }
+
+std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> MainWindow::ListenerConv2D(std::string anotherSource, std::vector<std::vector<std::vector<double>>> &biasesGive){
+    std::vector<double> bias;
+        std::vector<std::vector<double>> weights;
+
+        std::vector<std::vector<std::vector<double>>> resArr;
+        std::vector<std::vector<double>> tempArr;
+
+        std::vector<double> features;
+        std::vector<std::vector<double>> matrix;
+        std::vector<std::vector<double>> biases;
+        std::vector<std::vector<std::vector<double>>> input_tensor;
+        std::vector<std::vector<std::vector<std::vector<double>>>> conv_filters;
+        std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> conv_layers;
+
+
+        std::string source = anotherSource;
+        std::string line = "";
+        std::string all = "";
+        std::string Dense = "";
+        int index = 0;
+        const int sizeDense = 5;
+        char dense[] = { 'D', 'e', 'n', 's', 'e' };
+        char byte;
+        bool addArray = false;
+        bool roolListener = false;
+        bool cheakD = false;
+        int degree = 0, res = 0;
+        std::ifstream infile(source);
+        if (!infile.is_open()) {
+            qDebug() << "Ошибка открытия файла!" << endl;
+            return conv_layers;
+        }
+        while (infile.get(byte)) {  // читаем побайтно
+            all += byte;
+            if (dense[index] == byte) {
+                if (++index == sizeDense)
+                    break;
+                MainWindow::dopValue::exit = 1;
+                continue;
+            }
+            else index = MainWindow::dopValue::exit = 0;
+            if (byte == ']' && MainWindow::dopValue::conv_filters == 0 && MainWindow::dopValue::features == 1) {
+                features.push_back(inNumber(line));
+                line = "";
+                biases.push_back(features);
+                features.clear();
+                MainWindow::dopValue::clear();
+                continue;
+            }
+            if (MainWindow::dopValue::conv_filters == 0 && MainWindow::dopValue::matrix == 0 && MainWindow::dopValue::features == 1) {
+                if (byte == '-' || byte == '.' || isNumber(byte)) {
+                    line += byte;
+                    continue;
+                }
+                if (byte == ',' && !line.empty()) {
+                    features.push_back(inNumber(line));
+                    line = "";
+                    continue;
+                }
+            }
+            if (byte == '[' && MainWindow::dopValue::features == 0) {
+                MainWindow::dopValue::features = 1;
+            }
+            else if (byte == '[' && MainWindow::dopValue::features == 1 && MainWindow::dopValue::matrix == 0) {
+                MainWindow::dopValue::matrix = 1;
+            }
+            else if (byte == '[' && MainWindow::dopValue::matrix == 1 && MainWindow::dopValue::input_tensor == 0) {
+                MainWindow::dopValue::input_tensor = 1;
+            }
+            else if (byte == '[' && MainWindow::dopValue::input_tensor == 1 && MainWindow::dopValue::conv_filters == 0) {
+                MainWindow::dopValue::conv_filters = 1;
+            }
+            else if (MainWindow::dopValue::conv_filters == 1) {
+                if (byte == '-' || byte == '.' || isNumber(byte)) {
+                    line += byte;
+                    continue;
+                }
+                if (byte == ',' && !line.empty()) {
+                    features.push_back(inNumber(line));
+                    line = "";
+                    continue;
+                }
+                if (byte == ']' && !line.empty()) {
+                    features.push_back(inNumber(line));
+                    matrix.push_back(features);
+                    MainWindow::dopValue::features = 0;
+                    features.clear();
+                    line = "";
+                    continue;
+                }
+                if (byte == ']' && features.empty() && !matrix.empty()) {
+                    input_tensor.push_back(matrix);
+                    MainWindow::dopValue::matrix = 0;
+                    matrix.clear();
+                    continue;
+                }
+                if (byte == ']' && matrix.empty() && !input_tensor.empty()) {
+                    conv_filters.push_back(input_tensor);
+                    MainWindow::dopValue::input_tensor = 0;
+                    input_tensor.clear();
+                    continue;
+                }
+                if (byte == ']' && input_tensor.empty()) {
+                    conv_layers.push_back(conv_filters);
+                    MainWindow::dopValue::clear();
+                    conv_filters.clear();
+                    continue;
+                }
+            }
+
+        }
+        infile.close();
+        biasesGive.push_back(biases);
+        return conv_layers;
+}
+
+std::vector<std::vector<std::vector<double>>> MainWindow::ListenerDense(std::string anotherSource, std::vector<std::vector<std::vector<double>>> &biasesGive){
+    std::vector<double> bias;
+    std::vector<std::vector<double>> weights;
+    std::vector<std::vector<double>> biases;
+    std::vector<std::vector<std::vector<double>>> resArr;
+    std::vector<std::vector<double>> tempArr;
+    std::string source = "simpleModelFirst.txt";
+    std::string line = "";
+    std::string all = "";
+    char byte;
+    bool addArray = false;
+    bool roolListener = false;
+    bool cheakD = false;
+    int degree = 0, res = 0;
+    int index = 0;
+    const int sizeDense = 5;
+    char dense[] = { 'D', 'e', 'n', 's', 'e' };
+    std::ifstream infile(source);
+    bool enter = false;
+    if (!infile.is_open()) {
+        qDebug() << "Ошибка открытия файла!" << endl;
+        return resArr;
+    }
+    while (infile.get(byte)) {  // читаем побайтно
+        all += byte;
+        if (dense[index] == byte && enter == false) {
+            if (++index == sizeDense)
+                enter = true;
+            dopValue::exit = 1;
+            continue;
+        }
+        else index = dopValue::exit = 0;
+        if (enter) {
+            if (byte == '[' && dopValue::accessLister == 1) {
+                dopValue::closed = false;
+                dopValue::weights = 1;
+                continue;
+            }
+            if (byte == '[') {
+                dopValue::accessLister = 1;
+                continue;
+            }
+            if (dopValue::accessLister == 1 && (byte == '-' || byte == '.' || isNumber(byte))) {
+                line += byte;
+                continue;
+            }
+            if (byte != ',' && byte == ']' && dopValue::weights == false) {
+                bias.push_back(inNumber(line));
+                line = "";
+                biases.push_back(bias);
+                bias.clear();
+                dopValue::accessLister = false;
+                dopValue::closed = false;
+            }
+            if ((byte == ',' || byte == ']')) {
+                if (byte == ']' && dopValue::closed == true) {
+                    dopValue::accessLister = false;
+                    dopValue::closed = false;
+                    dopValue::weights = false;
+                    resArr.push_back(weights);
+                    weights.clear();
+                    continue;
+
+                }
+                else if (dopValue::accessLister == 1 && byte == ']' && !line.empty()) {
+                    bias.push_back(inNumber(line));
+                    weights.push_back(bias);
+                    line = "";
+                    bias.clear();
+                    dopValue::closed = true;
+                    continue;
+                }
+                else if (dopValue::accessLister == 1 && byte == ',' && !line.empty()) {
+                    bias.push_back(inNumber(line));
+                    line = "";
+                    continue;
+                }
+
+            }
+        }
+    }
+    biasesGive.push_back(biases);
+    return resArr;
+}
+
 
 
 void MainWindow::compare(std::vector<std::vector<std::vector<double>>> MatrixOne, std::vector<std::vector<std::vector<double>>> MatrixTwo,

@@ -58,8 +58,13 @@ private:
     void compare(std::vector<std::vector<std::vector<double>>> MatrixOne, std::vector<std::vector<std::vector<double>>> MatrixTwo,
                  std::vector<QGraphicsLineItem*> maitrisOne, std::vector<QGraphicsLineItem*> maitrisTwo);
     std::vector<std::vector<std::vector<double>>> readModel(std::string amotherSource = "model_weights_unick.txt");
-    double inNumver(std::string another);
+    double inNumber(std::string another);
     void clearWeight();
+    bool isNumber(char other);
+    std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> ListenerConv2D(std::string anotherSource, std::vector<std::vector<std::vector<double>>> &biasesGive);
+    std::vector<std::vector<std::vector<double>>> ListenerDense(std::string anotherSource, std::vector<std::vector<std::vector<double>>> &biasesGive);
+    void writeConv2D(std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> matrixConv2D, std::vector<std::vector<double>> biasesGive);
+    void writeDense(std::vector<std::vector<std::vector<double>>> matrixDense, std::vector<std::vector<double>> biasesGive);
 
     Ui::MainWindow *ui;
     QGraphicsScene* scene;
@@ -75,6 +80,29 @@ private:
     std::vector<std::vector<std::vector<double>>> resMatrix;
     double coefficient;
     bool exitWhen = false;
+
+
+    struct dopValue {
+        static bool features;
+        static bool matrix;
+        static bool input_tensor;
+        static bool conv_filters;
+        static bool exit;
+        static bool weights;
+        static bool bias;
+        static bool accessLister;
+        static bool closed;
+        static void clear() {
+            dopValue::features = 0;
+            dopValue::matrix = 0;
+            dopValue::input_tensor = 0;
+            dopValue::conv_filters = 0;
+            dopValue::weights = 0;
+            dopValue::bias = 0;
+            dopValue::accessLister = 0;
+            dopValue::closed = 0;
+        }
+    };
 };
 
 
