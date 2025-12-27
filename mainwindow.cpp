@@ -1,6 +1,5 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
-#include <qDebug>
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -74,6 +73,36 @@ MainWindow::MainWindow(QWidget *parent) :
     for (QGraphicsLineItem* item : BothMaitrix)
         item->setPen(QPen(Qt::red, 2));
     secondWindow->show();
+    biasesConv2D.push_back(std::vector<std::vector<std::vector<double>>>());
+    biasesConv2D.push_back(std::vector<std::vector<std::vector<double>>>());
+    biasesDense.push_back(std::vector<std::vector<std::vector<double>>>());
+    biasesDense.push_back(std::vector<std::vector<std::vector<double>>>());
+    LayersConv2dS.push_back(ListenerConv2D("simpleModelFirst.txt", biasesConv2D[0]));
+    dense.push_back(ListenerDense("simpleModelFirst.txt", biasesDense[0]));
+    LayersConv2dS.push_back(ListenerConv2D("square_detector_model_29.h5_weights.txt", biasesConv2D[1]));
+    dense.push_back(ListenerDense("square_detector_model_29.h5_weights.txt", biasesDense[1]));
+    qDebug() << "LayersConv2dS.size()" << LayersConv2dS.size() << endl;
+    qDebug() << "dense.size()"<< dense.size() << endl;
+    qDebug() << "biasesDense.size()"<< biasesDense.size() << endl;
+    for (int i = 0; i < biasesDense.size(); i++){
+        qDebug() << "biases[" << i << "].size()"<< biasesDense[i].size() << endl;
+    }
+    qDebug() << "biasesConv2D.size()"<< biasesDense.size() << endl;
+    for (int i = 0; i < biasesConv2D.size(); i++){
+        qDebug() << "biases[" << i << "].size()"<< biasesConv2D[i].size() << endl;
+    }
+
+    LayersConv2dSRes.push_back(additionLayersConv2D(LayersConv2dS[0], LayersConv2dS[1]));
+    denseRes.push_back(additionLayersDense(dense[0], dense[1]));
+    biasesConv2DRes.push_back(additionLayersBiases(biasesConv2D[0], biasesConv2D[1]));
+    biasesDenseRes.push_back(additionLayersBiases(biasesDense[0], biasesDense[1]));
+    printLayersConv2dSResSizes(LayersConv2dS);
+    printLayersConv2dSResSizes(LayersConv2dSRes);
+    printLayersDenseSResSizes(dense);
+    printLayersDenseSResSizes(denseRes);
+    printLayersBiasesSizes(biasesConv2DRes);
+    printLayersBiasesSizes(biasesDenseRes);
+
 }
 bool MainWindow::dopValue::features = false;
 bool MainWindow::dopValue::matrix = false;
@@ -522,6 +551,241 @@ std::vector<std::vector<std::vector<double>>> MainWindow::ListenerDense(std::str
     }
     biasesGive.push_back(biases);
     return resArr;
+}
+
+std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> MainWindow::additionLayersConv2D(std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> A,
+                                                                                             std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> B){
+    // Создаем вектор C такого же размера, как A
+    std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> C(A.size());
+
+    for (int i = 0; i < A.size(); i++) {
+        // Проверяем размерность A[i]
+        if (i >= B.size()) {
+            qDebug() << "Размерность не совпадает!";
+            continue;
+        }
+
+        // Инициализируем второй уровень
+        C[i].resize(A[i].size());
+
+        for (int j = 0; j < A[i].size(); j++) {  // Ошибка в условии цикла: A[i].size()
+            if (j >= B[i].size()) {
+                continue;
+            }
+
+            // Инициализируем третий уровень
+            C[i][j].resize(A[i][j].size());
+
+            for (int q = 0; q < A[i][j].size(); q++) {
+                if (q >= B[i][j].size()) {
+                    continue;
+                }
+
+                // Инициализируем четвертый уровень
+                C[i][j][q].resize(A[i][j][q].size());
+
+                for (int e = 0; e < A[i][j][q].size(); e++) {
+                    if (e >= B[i][j][q].size()) {
+                        continue;
+                    }
+
+                    // Пятый уровень (вектор double) создается пустым автоматически
+
+                    // Добавляем элементы из A
+                    for (int item = 0; item < A[i][j][q][e].size(); item++) {
+                        C[i][j][q][e].push_back(A[i][j][q][e][item]);
+                    }
+
+                    // Добавляем элементы из B
+                    for (int item = 0; item < B[i][j][q][e].size(); item++) {
+                        C[i][j][q][e].push_back(B[i][j][q][e][item]);
+                    }
+                }
+            }
+        }
+    }
+    return C;
+}
+
+void MainWindow::printLayersConv2dSResSizes(const std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>>>& LayersConv2dSRes) {
+    qDebug() << "=== Размеры LayersConv2dSRes ===" << endl;
+
+    // Уровень 1
+    qDebug() << "Уровень 1 (внешний вектор): " << LayersConv2dSRes.size() << " элементов" << endl;
+
+    for (int i = 0; i < LayersConv2dSRes.size(); i++) {
+        // Уровень 2
+        if (!LayersConv2dSRes[i].empty()) {
+            qDebug() << "  [" << i << "] Уровень 2: " << LayersConv2dSRes[i].size() << " элементов" << endl;
+        }
+
+        for (int j = 0; j < LayersConv2dSRes[i].size(); j++) {
+            // Уровень 3
+            if (!LayersConv2dSRes[i][j].empty()) {
+                qDebug() << "    [" << i << "][" << j << "] Уровень 3: "
+                          << LayersConv2dSRes[i][j].size() << " элементов" << endl;
+            }
+
+            for (int k = 0; k < 1; k++) {
+                // Уровень 4
+                if (!LayersConv2dSRes[i][j][k].empty()) {
+                    qDebug() << "      [" << i << "][" << j << "][" << k << "] Уровень 4: "
+                              << LayersConv2dSRes[i][j][k].size() << " элементов" << endl;
+                }
+
+                for (int l = 0; l < 1; l++) {
+                    // Уровень 5
+                    if (!LayersConv2dSRes[i][j][k][l].empty()) {
+                        qDebug() << "        [" << i << "][" << j << "][" << k << "][" << l << "] Уровень 5: "
+                                  << LayersConv2dSRes[i][j][k][l].size() << " элементов" << endl;
+                    }
+
+                    for (int m = 0; m < 1; m++) {
+                        // Уровень 6 (самый внутренний - вектор double)
+                        qDebug() << "          [" << i << "][" << j << "][" << k << "][" << l << "][" << m
+                                  << "] Уровень 6 (вектор double): "
+                                  << LayersConv2dSRes[i][j][k][l][m].size() << " элементов" << endl;
+                    }
+                }
+            }
+        }
+    }
+}
+
+std::vector<std::vector<std::vector<double>>> MainWindow::additionLayersDense(
+    std::vector<std::vector<std::vector<double>>> A,
+    std::vector<std::vector<std::vector<double>>> B) {
+
+    // Создаем вектор C такого же размера, как A
+    std::vector<std::vector<std::vector<double>>> C(A.size());
+
+    for (int i = 0; i < A.size(); i++) {
+        // Проверяем размерность A[i]
+        if (i >= B.size()) {
+            qDebug() << "Размерность не совпадает на уровне i=" << i << "!";
+            continue;
+        }
+
+        // Инициализируем второй уровень
+        C[i].resize(A[i].size());
+
+        for (int j = 0; j < A[i].size(); j++) {
+            if (j >= B[i].size()) {
+                qDebug() << "Размерность не совпадает на уровне [" << i << "][" << j << "]!";
+                continue;
+            }
+
+            // Создаем пустой вектор для конкатенации A[i][j] и B[i][j]
+            C[i][j] = std::vector<double>();  // Явно создаем пустой вектор
+
+            // Добавляем элементы из A
+            for (int item = 0; item < A[i][j].size(); item++) {
+                C[i][j].push_back(A[i][j][item]);
+            }
+
+            // Добавляем элементы из B
+            for (int item = 0; item < B[i][j].size(); item++) {
+                C[i][j].push_back(B[i][j][item]);
+            }
+        }
+    }
+
+    return C;
+}
+
+std::vector<std::vector<std::vector<double>>> MainWindow::additionLayersBiases(std::vector<std::vector<std::vector<double>>> A, std::vector<std::vector<std::vector<double>>> B){
+
+    // Создаем вектор C такого же размера, как A
+    std::vector<std::vector<std::vector<double>>> C(A.size());
+
+    for (int i = 0; i < A.size(); i++) {
+        // Проверяем размерность A[i]
+        if (i >= B.size()) {
+            qDebug() << "Размерность не совпадает на уровне i=" << i << "!";
+            continue;
+        }
+
+        // Инициализируем второй уровень
+        C[i].resize(A[i].size());
+
+        for (int j = 0; j < A[i].size(); j++) {
+            if (j >= B[i].size()) {
+                qDebug() << "Размерность не совпадает на уровне [" << i << "][" << j << "]!";
+                continue;
+            }
+
+            // Создаем пустой вектор для конкатенации A[i][j] и B[i][j]
+            C[i][j] = std::vector<double>();  // Явно создаем пустой вектор
+
+            // Добавляем элементы из A
+            for (int item = 0; item < A[i][j].size(); item++) {
+                C[i][j].push_back(A[i][j][item]);
+            }
+
+            // Добавляем элементы из B
+            for (int item = 0; item < B[i][j].size(); item++) {
+                C[i][j].push_back(B[i][j][item]);
+            }
+        }
+    }
+
+    return C;
+}
+
+
+void MainWindow::printLayersDenseSResSizes(const std::vector<std::vector<std::vector<std::vector<double>>>>& denseRes) {
+    qDebug() << "=== Размеры denseRes ===";
+
+    // Уровень 1
+    qDebug() << "Уровень 1 (внешний вектор):" << denseRes.size() << "элементов";
+
+    for (int i = 0; i < denseRes.size(); i++) {
+        if (!denseRes[i].empty()) {
+            qDebug() << "  [" << i << "] Уровень 2:" << denseRes[i].size() << "элементов";
+        }
+
+        for (int j = 0; j < denseRes[i].size(); j++) {
+            if (!denseRes[i][j].empty()) {
+                qDebug() << "    [" << i << "][" << j << "] Уровень 3:"
+                         << denseRes[i][j].size() << "элементов";
+            }
+
+            for (int k = 0; k < 1; k++) {
+                if (!denseRes[i][j][k].empty()) {
+                    qDebug() << "      [" << i << "][" << j << "][" << k << "] Уровень 4 (вектор double):"
+                             << denseRes[i][j][k].size() << "элементов";
+                }
+            }
+        }
+    }
+}
+
+
+void MainWindow::printLayersBiasesSizes(const std::vector<std::vector<std::vector<std::vector<double>>>>& biasesRes) {
+    qDebug() << "=== Размеры biasesRes ===";
+
+    // Уровень 1
+    qDebug() << "Уровень 1 (внешний вектор):" << denseRes.size() << "элементов";
+
+    for (int i = 0; i < denseRes.size(); i++) {
+        if (!denseRes[i].empty()) {
+            qDebug() << "  [" << i << "] Уровень 2:" << denseRes[i].size() << "элементов";
+        }
+
+        for (int j = 0; j < denseRes[i].size(); j++) {
+            if (!denseRes[i][j].empty()) {
+                qDebug() << "    [" << i << "][" << j << "] Уровень 3:"
+                         << denseRes[i][j].size() << "элементов";
+            }
+
+            for (int k = 0; k < 1; k++) {
+                if (!denseRes[i][j][k].empty()) {
+                    qDebug() << "      [" << i << "][" << j << "][" << k << "] Уровень 4 (вектор double):"
+                             << denseRes[i][j][k].size() << "элементов";
+                }
+            }
+        }
+    }
 }
 
 

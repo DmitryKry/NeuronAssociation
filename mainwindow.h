@@ -65,7 +65,15 @@ private:
     std::vector<std::vector<std::vector<double>>> ListenerDense(std::string anotherSource, std::vector<std::vector<std::vector<double>>> &biasesGive);
     void writeConv2D(std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> matrixConv2D, std::vector<std::vector<double>> biasesGive);
     void writeDense(std::vector<std::vector<std::vector<double>>> matrixDense, std::vector<std::vector<double>> biasesGive);
-
+    std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> additionLayersConv2D(std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> A,
+                                                                                                 std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> B);
+    std::vector<std::vector<std::vector<double>>> additionLayersDense(std::vector<std::vector<std::vector<double>>> A,
+                                                                                                 std::vector<std::vector<std::vector<double>>> B);
+    std::vector<std::vector<std::vector<double>>> additionLayersBiases(std::vector<std::vector<std::vector<double>>> A,
+                                                                                                 std::vector<std::vector<std::vector<double>>> B);
+    void printLayersConv2dSResSizes(const std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>>>& LayersConv2dSRes);
+    void printLayersDenseSResSizes(const std::vector<std::vector<std::vector<std::vector<double>>>>& denseRes);
+    void printLayersBiasesSizes(const std::vector<std::vector<std::vector<std::vector<double>>>>& biasesRes);
     Ui::MainWindow *ui;
     QGraphicsScene* scene;
     QGraphicsScene *secondScene;
@@ -80,6 +88,15 @@ private:
     std::vector<std::vector<std::vector<double>>> resMatrix;
     double coefficient;
     bool exitWhen = false;
+
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>>> LayersConv2dS;
+    std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>>> LayersConv2dSRes;
+    std::vector<std::vector<std::vector<std::vector<double>>>> dense;
+    std::vector<std::vector<std::vector<std::vector<double>>>> denseRes;
+    std::vector<std::vector<std::vector<std::vector<double>>>> biasesConv2D;
+    std::vector<std::vector<std::vector<std::vector<double>>>> biasesDense;
+    std::vector<std::vector<std::vector<std::vector<double>>>> biasesConv2DRes;
+    std::vector<std::vector<std::vector<std::vector<double>>>> biasesDenseRes;
 
 
     struct dopValue {
