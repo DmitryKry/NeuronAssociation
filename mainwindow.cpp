@@ -51,7 +51,6 @@ MainWindow::MainWindow(QWidget *parent) :
     std::vector<QGraphicsLineItem*> maitrisTwo = drawWeight(scene, resMatrix);
     for (QGraphicsLineItem* item : maitrisTwo)
         item->setPen(QPen(Qt::red, 2));
-    compare(resMatrix, resArr, maitrisTwo, maitrisOne);
     index = 0;
     bigArr *= 2;
     setPointes.clear();
@@ -73,14 +72,15 @@ MainWindow::MainWindow(QWidget *parent) :
     for (QGraphicsLineItem* item : BothMaitrix)
         item->setPen(QPen(Qt::red, 2));
     secondWindow->show();
-    biasesConv2D.push_back(std::vector<std::vector<std::vector<double>>>());
-    biasesConv2D.push_back(std::vector<std::vector<std::vector<double>>>());
-    biasesDense.push_back(std::vector<std::vector<std::vector<double>>>());
-    biasesDense.push_back(std::vector<std::vector<std::vector<double>>>());
+    biasesConv2D.push_back(std::vector<std::vector<double>>());
+    biasesConv2D.push_back(std::vector<std::vector<double>>());
+    biasesDense.push_back(std::vector<std::vector<double>>());
+    biasesDense.push_back(std::vector<std::vector<double>>());
     LayersConv2dS.push_back(ListenerConv2D("simpleModelFirst.txt", biasesConv2D[0]));
     dense.push_back(ListenerDense("simpleModelFirst.txt", biasesDense[0]));
     LayersConv2dS.push_back(ListenerConv2D("square_detector_model_29.h5_weights.txt", biasesConv2D[1]));
     dense.push_back(ListenerDense("square_detector_model_29.h5_weights.txt", biasesDense[1]));
+    /*
     qDebug() << "LayersConv2dS.size()" << LayersConv2dS.size() << endl;
     qDebug() << "dense.size()"<< dense.size() << endl;
     qDebug() << "biasesDense.size()"<< biasesDense.size() << endl;
@@ -90,18 +90,17 @@ MainWindow::MainWindow(QWidget *parent) :
     qDebug() << "biasesConv2D.size()"<< biasesDense.size() << endl;
     for (int i = 0; i < biasesConv2D.size(); i++){
         qDebug() << "biases[" << i << "].size()"<< biasesConv2D[i].size() << endl;
-    }
+    }*/
 
-    LayersConv2dSRes.push_back(additionLayersConv2D(LayersConv2dS[0], LayersConv2dS[1]));
-    denseRes.push_back(additionLayersDense(dense[0], dense[1]));
-    biasesConv2DRes.push_back(additionLayersBiases(biasesConv2D[0], biasesConv2D[1]));
-    biasesDenseRes.push_back(additionLayersBiases(biasesDense[0], biasesDense[1]));
-    printLayersConv2dSResSizes(LayersConv2dS);
+    LayersConv2dSRes = additionLayersConv2D(LayersConv2dS[0], LayersConv2dS[1]);
+    denseRes = additionLayersDense(dense[0], dense[1]);
+    biasesConv2DRes = additionLayersBiases(biasesConv2D[0], biasesConv2D[1]);
+    biasesDenseRes = additionLayersBiases(biasesDense[0], biasesDense[1]);
     printLayersConv2dSResSizes(LayersConv2dSRes);
-    printLayersDenseSResSizes(dense);
     printLayersDenseSResSizes(denseRes);
-    printLayersBiasesSizes(biasesConv2DRes);
     printLayersBiasesSizes(biasesDenseRes);
+    writeReadyModelConv2D(LayersConv2dSRes, biasesConv2DRes);
+    writeReadyModelDense(denseRes, biasesDenseRes);
 
 }
 bool MainWindow::dopValue::features = false;
@@ -352,7 +351,7 @@ std::vector<QGraphicsLineItem*> MainWindow::drawWeight(QGraphicsScene* anotherSc
     return strongLines;
 }
 
-std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> MainWindow::ListenerConv2D(std::string anotherSource, std::vector<std::vector<std::vector<double>>> &biasesGive){
+std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> MainWindow::ListenerConv2D(std::string anotherSource, std::vector<std::vector<double>> &biasesGive){
     std::vector<double> bias;
         std::vector<std::vector<double>> weights;
 
@@ -464,11 +463,15 @@ std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> MainWind
 
         }
         infile.close();
-        biasesGive.push_back(biases);
+        for (int i = 0; i < biases.size(); i++){
+            biasesGive.push_back(std::vector<double>());
+            for (int j = 0; j < biases[i].size(); j++)
+                biasesGive[i].push_back(biases[i][j]);
+        }
         return conv_layers;
 }
 
-std::vector<std::vector<std::vector<double>>> MainWindow::ListenerDense(std::string anotherSource, std::vector<std::vector<std::vector<double>>> &biasesGive){
+std::vector<std::vector<std::vector<double>>> MainWindow::ListenerDense(std::string anotherSource, std::vector<std::vector<double>> &biasesGive){
     std::vector<double> bias;
     std::vector<std::vector<double>> weights;
     std::vector<std::vector<double>> biases;
@@ -549,7 +552,11 @@ std::vector<std::vector<std::vector<double>>> MainWindow::ListenerDense(std::str
             }
         }
     }
-    biasesGive.push_back(biases);
+    for (int i = 0; i < biases.size(); i++){
+        biasesGive.push_back(std::vector<double>());
+        for (int j = 0; j < biases[i].size(); j++)
+            biasesGive[i].push_back(biases[i][j]);
+    }
     return resArr;
 }
 
@@ -607,51 +614,6 @@ std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> MainWind
     return C;
 }
 
-void MainWindow::printLayersConv2dSResSizes(const std::vector<std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>>>& LayersConv2dSRes) {
-    qDebug() << "=== Размеры LayersConv2dSRes ===" << endl;
-
-    // Уровень 1
-    qDebug() << "Уровень 1 (внешний вектор): " << LayersConv2dSRes.size() << " элементов" << endl;
-
-    for (int i = 0; i < LayersConv2dSRes.size(); i++) {
-        // Уровень 2
-        if (!LayersConv2dSRes[i].empty()) {
-            qDebug() << "  [" << i << "] Уровень 2: " << LayersConv2dSRes[i].size() << " элементов" << endl;
-        }
-
-        for (int j = 0; j < LayersConv2dSRes[i].size(); j++) {
-            // Уровень 3
-            if (!LayersConv2dSRes[i][j].empty()) {
-                qDebug() << "    [" << i << "][" << j << "] Уровень 3: "
-                          << LayersConv2dSRes[i][j].size() << " элементов" << endl;
-            }
-
-            for (int k = 0; k < 1; k++) {
-                // Уровень 4
-                if (!LayersConv2dSRes[i][j][k].empty()) {
-                    qDebug() << "      [" << i << "][" << j << "][" << k << "] Уровень 4: "
-                              << LayersConv2dSRes[i][j][k].size() << " элементов" << endl;
-                }
-
-                for (int l = 0; l < 1; l++) {
-                    // Уровень 5
-                    if (!LayersConv2dSRes[i][j][k][l].empty()) {
-                        qDebug() << "        [" << i << "][" << j << "][" << k << "][" << l << "] Уровень 5: "
-                                  << LayersConv2dSRes[i][j][k][l].size() << " элементов" << endl;
-                    }
-
-                    for (int m = 0; m < 1; m++) {
-                        // Уровень 6 (самый внутренний - вектор double)
-                        qDebug() << "          [" << i << "][" << j << "][" << k << "][" << l << "][" << m
-                                  << "] Уровень 6 (вектор double): "
-                                  << LayersConv2dSRes[i][j][k][l][m].size() << " элементов" << endl;
-                    }
-                }
-            }
-        }
-    }
-}
-
 std::vector<std::vector<std::vector<double>>> MainWindow::additionLayersDense(
     std::vector<std::vector<std::vector<double>>> A,
     std::vector<std::vector<std::vector<double>>> B) {
@@ -693,127 +655,153 @@ std::vector<std::vector<std::vector<double>>> MainWindow::additionLayersDense(
     return C;
 }
 
-std::vector<std::vector<std::vector<double>>> MainWindow::additionLayersBiases(std::vector<std::vector<std::vector<double>>> A, std::vector<std::vector<std::vector<double>>> B){
+void MainWindow::printLayersConv2dSResSizes(const std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>>& LayersConv2dSRes) {
+    qDebug() << "=== Размеры LayersConv2dSRes ===" << endl;
 
-    // Создаем вектор C такого же размера, как A
-    std::vector<std::vector<std::vector<double>>> C(A.size());
+    // Уровень 1
+    qDebug() << "Уровень 1 (внешний вектор): " << LayersConv2dSRes.size() << " элементов" << endl;
+
+
+
+        for (int j = 0; j < LayersConv2dSRes.size(); j++) {
+            // Уровень 3
+            if (!LayersConv2dSRes[j].empty()) {
+                qDebug() << "    [" << j << "] Уровень 3: "
+                          << LayersConv2dSRes[j].size() << " элементов" << endl;
+            }
+
+            for (int k = 0; k < 1; k++) {
+                // Уровень 4
+                if (!LayersConv2dSRes[j][k].empty()) {
+                    qDebug() << "      [" << j << "][" << k << "] Уровень 4: "
+                              << LayersConv2dSRes[j][k].size() << " элементов" << endl;
+                }
+
+                for (int l = 0; l < 1; l++) {
+                    // Уровень 5
+                    if (!LayersConv2dSRes[j][k][l].empty()) {
+                        qDebug() << "        [" << j << "][" << k << "][" << l << "] Уровень 5: "
+                                  << LayersConv2dSRes[j][k][l].size() << " элементов" << endl;
+                    }
+
+                    for (int m = 0; m < 1; m++) {
+                        // Уровень 6 (самый внутренний - вектор double)
+                        qDebug() << "          [" << j << "][" << k << "][" << l << "][" << m
+                                  << "] Уровень 6 (вектор double): "
+                                  << LayersConv2dSRes[j][k][l][m].size() << " элементов" << endl;
+                    }
+                }
+            }
+        }
+}
+
+std::vector<std::vector<double>> MainWindow::additionLayersBiases(
+    std::vector<std::vector<double>> A,
+    std::vector<std::vector<double>> B) {
+
+    std::vector<std::vector<double>> C;
 
     for (int i = 0; i < A.size(); i++) {
         // Проверяем размерность A[i]
         if (i >= B.size()) {
             qDebug() << "Размерность не совпадает на уровне i=" << i << "!";
+            C = std::vector<std::vector<double>>();
             continue;
         }
 
-        // Инициализируем второй уровень
-        C[i].resize(A[i].size());
+        // Создаем вектор для текущей строки
+        C.push_back(std::vector<double>()); // Два элемента: A[i] и B[i]
 
-        for (int j = 0; j < A[i].size(); j++) {
-            if (j >= B[i].size()) {
-                qDebug() << "Размерность не совпадает на уровне [" << i << "][" << j << "]!";
-                continue;
-            }
+        for (int item = 0; item < A[i].size(); item++) {
+            C[i].push_back(A[i][item]);
+        }
 
-            // Создаем пустой вектор для конкатенации A[i][j] и B[i][j]
-            C[i][j] = std::vector<double>();  // Явно создаем пустой вектор
-
-            // Добавляем элементы из A
-            for (int item = 0; item < A[i][j].size(); item++) {
-                C[i][j].push_back(A[i][j][item]);
-            }
-
-            // Добавляем элементы из B
-            for (int item = 0; item < B[i][j].size(); item++) {
-                C[i][j].push_back(B[i][j][item]);
-            }
+                   // Добавляем элементы из B
+        for (int item = 0; item < B[i].size(); item++) {
+            C[i].push_back(B[i][item]);
         }
     }
-
     return C;
 }
 
 
-void MainWindow::printLayersDenseSResSizes(const std::vector<std::vector<std::vector<std::vector<double>>>>& denseRes) {
+void MainWindow::printLayersDenseSResSizes(const std::vector<std::vector<std::vector<double>>>& denseRes) {
     qDebug() << "=== Размеры denseRes ===";
 
     // Уровень 1
     qDebug() << "Уровень 1 (внешний вектор):" << denseRes.size() << "элементов";
 
     for (int i = 0; i < denseRes.size(); i++) {
-        if (!denseRes[i].empty()) {
-            qDebug() << "  [" << i << "] Уровень 2:" << denseRes[i].size() << "элементов";
-        }
+        qDebug() << "  [" << i << "] Уровень 2:" << denseRes[i].size() << "элементов";
 
-        for (int j = 0; j < denseRes[i].size(); j++) {
-            if (!denseRes[i][j].empty()) {
-                qDebug() << "    [" << i << "][" << j << "] Уровень 3:"
-                         << denseRes[i][j].size() << "элементов";
-            }
+        for (int j = 0; j < 1; j++) {
+            qDebug() << "    [" << i << "][" << j << "] Уровень 3:"
+                     << denseRes[i][j].size() << "элементов";
 
-            for (int k = 0; k < 1; k++) {
-                if (!denseRes[i][j][k].empty()) {
-                    qDebug() << "      [" << i << "][" << j << "][" << k << "] Уровень 4 (вектор double):"
-                             << denseRes[i][j][k].size() << "элементов";
-                }
-            }
         }
     }
 }
 
-
-void MainWindow::printLayersBiasesSizes(const std::vector<std::vector<std::vector<std::vector<double>>>>& biasesRes) {
+void MainWindow::printLayersBiasesSizes(const std::vector<std::vector<double>>& biasesRes) {
     qDebug() << "=== Размеры biasesRes ===";
 
     // Уровень 1
-    qDebug() << "Уровень 1 (внешний вектор):" << denseRes.size() << "элементов";
+    qDebug() << "Уровень 1 (внешний вектор):" << biasesRes.size() << "элементов";
+
+    for (int i = 0; i < biasesRes.size(); i++) {
+        qDebug() << "  [" << i << "] Уровень 2:" << biasesRes[i].size() << "элементов";
+    }
+}
+void MainWindow::writeReadyModelConv2D(const std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>>& LayersConv2dSRes,
+                                 const std::vector<std::vector<double>>& biasesConv2DRes){
+    std::ofstream out_file("outputConv2D.txt");
+
+    for (int i = 0; i < LayersConv2dSRes.size(); i++) {
+        // Запись в консоль
+        for (std::vector<std::vector<std::vector<double>>> elemconv_filters : LayersConv2dSRes[i]) {
+            for (std::vector<std::vector<double>> elemInput_tensor : elemconv_filters) {
+                for (std::vector<double> elemMatrix : elemInput_tensor) {
+                    for (double item : elemMatrix) {
+                        out_file << item << ' ';  // Запись в файл
+                    }
+                    out_file << '\n';  // Запись в файл
+                }
+                out_file << '\n';
+            }
+            out_file << '\n';  // Запись в файл
+        }
+        out_file << '\n';  // Запись в файл
+
+        for (double item : biasesConv2DRes[i]) {
+            out_file << item << ' ';  // Запись в файл
+        }
+        out_file << '\n';  // Запись в файл
+
+        out_file << '\n';  // Запись в файл
+    }
+
+    // Закрываем файл
+    out_file.close();
+}
+
+void MainWindow::writeReadyModelDense(const std::vector<std::vector<std::vector<double>>>& denseRes,
+                          const std::vector<std::vector<double>>& biasesDenseRes){
+    std::ofstream out_file("outputDense.txt");
 
     for (int i = 0; i < denseRes.size(); i++) {
-        if (!denseRes[i].empty()) {
-            qDebug() << "  [" << i << "] Уровень 2:" << denseRes[i].size() << "элементов";
+        for (std::vector<double> elem : denseRes[i]) {
+            for (double item : elem)
+                out_file << item << ' ';
+            out_file << '\n';
         }
-
-        for (int j = 0; j < denseRes[i].size(); j++) {
-            if (!denseRes[i][j].empty()) {
-                qDebug() << "    [" << i << "][" << j << "] Уровень 3:"
-                         << denseRes[i][j].size() << "элементов";
-            }
-
-            for (int k = 0; k < 1; k++) {
-                if (!denseRes[i][j][k].empty()) {
-                    qDebug() << "      [" << i << "][" << j << "][" << k << "] Уровень 4 (вектор double):"
-                             << denseRes[i][j][k].size() << "элементов";
-                }
-            }
-        }
+        out_file << '\n';
+        for (double item : biasesDenseRes[i])
+            out_file << item << ' ';
+        out_file << '\n';
+        out_file << '\n';
     }
+    out_file.close();
 }
 
-
-
-void MainWindow::compare(std::vector<std::vector<std::vector<double>>> MatrixOne, std::vector<std::vector<std::vector<double>>> MatrixTwo,
-                         std::vector<QGraphicsLineItem*> maitrisOne, std::vector<QGraphicsLineItem*> maitrisTwo){
-    for (QGraphicsLineItem* item : maitrisOne)
-        qDebug() << item << ' ';
-    qDebug() << '\n';
-    qDebug() << 'maitrisOne.size() - ' << maitrisOne.size();
-    qDebug() << '\n';
-    if (MatrixOne.size() != MatrixTwo.size() ||
-            MatrixOne[0].size() != MatrixTwo[0].size() ||
-            MatrixOne[0][0].size() != MatrixTwo[0][0].size()) {
-            qDebug() << "Матрицы имеют разные размеры!" << endl;
-            return;
-        }
-    for (size_t i = 0; i < MatrixOne.size(); ++i) {
-        for (size_t j = 0; j < MatrixOne[i].size(); ++j) {
-            for (size_t k = 0; k < MatrixOne[i][j].size(); ++k) {
-                if (MatrixOne[i][j][k] == MatrixTwo[i][j][k]) {
-                    qDebug() << "Совпадение в индексах [" << i << "][" << j << "][" << k
-                              << "]: значение = " << MatrixOne[i][j][k] << endl;
-                    maitrisOne[i * j * k]->setPen(QPen(Qt::blue, 2));
-                }
-            }
-        }
-    }
-}
 
 
