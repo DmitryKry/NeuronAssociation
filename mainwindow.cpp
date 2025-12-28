@@ -92,14 +92,23 @@ MainWindow::MainWindow(QWidget *parent) :
         qDebug() << "biases[" << i << "].size()"<< biasesConv2D[i].size() << endl;
     }*/
 
-    LayersConv2dSRes = additionLayersConv2D(LayersConv2dS[0], LayersConv2dS[1]);
+    //LayersConv2dSRes = additionLayersConv2D(LayersConv2dS[0], LayersConv2dS[1]);
     denseRes = additionLayersDense(dense[0], dense[1]);
     biasesConv2DRes = additionLayersBiases(biasesConv2D[0], biasesConv2D[1]);
     biasesDenseRes = additionLayersBiases(biasesDense[0], biasesDense[1]);
-    printLayersConv2dSResSizes(LayersConv2dSRes);
+    //printLayersConv2dSResSizes(LayersConv2dS[0]);
+    //printLayersConv2dSResSizes(LayersConv2dS[1]);
     printLayersDenseSResSizes(denseRes);
     printLayersBiasesSizes(biasesDenseRes);
-    writeReadyModelConv2D(LayersConv2dSRes, biasesConv2DRes);
+    //writeReadyModelConv2D(LayersConv2dSRes, biasesConv2DRes);
+    for (int i = 0; i < LayersConv2dS.size(); i++){
+        printLayersConv2dSResSizes(LayersConv2dS[i]);
+        printLayersBiasesSizes(biasesConv2D[i]);
+        if (i == 1)
+            writeReadyModelConv2D(LayersConv2dS[i], biasesConv2D[i], "outputConv2D2.txt");
+        else writeReadyModelConv2D(LayersConv2dS[i], biasesConv2D[i]);
+    }
+
     writeReadyModelDense(denseRes, biasesDenseRes);
 
 }
@@ -144,22 +153,6 @@ void MainWindow::drawNeurons(QGraphicsScene* anotherScene, std::vector<std::vect
     neyrons.clear();
 }
 
-void MainWindow::drawStrongNeurons(std::vector<std::vector<double>> currentLayer, int indent, double nextEnter, int plant)
-{
-    for (int i = 0, q = nextEnter == 0 ? plant : (plant * (nextEnter)) + plant; i < currentLayer.size(); i++, q += plant){
-        neyrons.push_back(new QGraphicsEllipseItem(indent, q, 5, 5));
-        setTemp.push_back(pointXY(indent, q));
-
-        neyrons[i]->setBrush(QBrush(Qt::white)); // Заливка
-        neyrons[i]->setPen(QPen(Qt::black, 2)); // Контур
-
-        scene->addItem(neyrons[i]);
-    }
-    setPointes.push_back(setTemp);
-    setTemp.clear();
-    neyronses.push_back(neyrons);
-    neyrons.clear();
-}
 
 double MainWindow::inNumber(std::string another) {
     char numbers[10] = { '0', '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8', '9' };
@@ -655,46 +648,6 @@ std::vector<std::vector<std::vector<double>>> MainWindow::additionLayersDense(
     return C;
 }
 
-void MainWindow::printLayersConv2dSResSizes(const std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>>& LayersConv2dSRes) {
-    qDebug() << "=== Размеры LayersConv2dSRes ===" << endl;
-
-    // Уровень 1
-    qDebug() << "Уровень 1 (внешний вектор): " << LayersConv2dSRes.size() << " элементов" << endl;
-
-
-
-        for (int j = 0; j < LayersConv2dSRes.size(); j++) {
-            // Уровень 3
-            if (!LayersConv2dSRes[j].empty()) {
-                qDebug() << "    [" << j << "] Уровень 3: "
-                          << LayersConv2dSRes[j].size() << " элементов" << endl;
-            }
-
-            for (int k = 0; k < 1; k++) {
-                // Уровень 4
-                if (!LayersConv2dSRes[j][k].empty()) {
-                    qDebug() << "      [" << j << "][" << k << "] Уровень 4: "
-                              << LayersConv2dSRes[j][k].size() << " элементов" << endl;
-                }
-
-                for (int l = 0; l < 1; l++) {
-                    // Уровень 5
-                    if (!LayersConv2dSRes[j][k][l].empty()) {
-                        qDebug() << "        [" << j << "][" << k << "][" << l << "] Уровень 5: "
-                                  << LayersConv2dSRes[j][k][l].size() << " элементов" << endl;
-                    }
-
-                    for (int m = 0; m < 1; m++) {
-                        // Уровень 6 (самый внутренний - вектор double)
-                        qDebug() << "          [" << j << "][" << k << "][" << l << "][" << m
-                                  << "] Уровень 6 (вектор double): "
-                                  << LayersConv2dSRes[j][k][l][m].size() << " элементов" << endl;
-                    }
-                }
-            }
-        }
-}
-
 std::vector<std::vector<double>> MainWindow::additionLayersBiases(
     std::vector<std::vector<double>> A,
     std::vector<std::vector<double>> B) {
@@ -722,6 +675,86 @@ std::vector<std::vector<double>> MainWindow::additionLayersBiases(
         }
     }
     return C;
+}
+
+std::vector<std::vector<std::vector<double>>> concatDense(
+    const std::vector<std::vector<std::vector<double>>>& A,
+    const std::vector<std::vector<std::vector<double>>>& B)
+{
+    std::vector<std::vector<std::vector<double>>> C;
+    size_t n = std::min(A.size(), B.size());
+
+    for (size_t i = 0; i < n; i++) {
+        std::vector<std::vector<double>> neuronLayer;
+        size_t m = std::min(A[i].size(), B[i].size());
+        for (size_t j = 0; j < m; j++) {
+            std::vector<double> neuronWeights;
+            neuronWeights.reserve(A[i][j].size() + B[i][j].size());
+            neuronWeights.insert(neuronWeights.end(), A[i][j].begin(), A[i][j].end());
+            neuronWeights.insert(neuronWeights.end(), B[i][j].begin(), B[i][j].end());
+            neuronLayer.push_back(neuronWeights);
+        }
+        C.push_back(neuronLayer);
+    }
+    return C;
+}
+
+std::vector<std::vector<double>> concatBiases(
+    const std::vector<std::vector<double>>& A,
+    const std::vector<std::vector<double>>& B)
+{
+    std::vector<std::vector<double>> C;
+    size_t n = std::min(A.size(), B.size());
+
+    for (size_t i = 0; i < n; i++) {
+        std::vector<double> row;
+        row.reserve(A[i].size() + B[i].size());
+        row.insert(row.end(), A[i].begin(), A[i].end());
+        row.insert(row.end(), B[i].begin(), B[i].end());
+        C.push_back(row);
+    }
+    return C;
+}
+
+
+void MainWindow::printLayersConv2dSResSizes(const std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>>& LayersConv2dSRes) {
+    qDebug() << "=== Размеры LayersConv2dSRes ===" << endl;
+
+    // Уровень 1
+    qDebug() << "Уровень 1 (внешний вектор): " << LayersConv2dSRes.size() << " элементов" << endl;
+
+
+
+        for (int j = 0; j < LayersConv2dSRes.size(); j++) {
+            // Уровень 2
+            if (!LayersConv2dSRes[j].empty()) {
+                qDebug() << "    [" << j << "] Уровень 2: "
+                          << LayersConv2dSRes[j].size() << " элементов" << endl;
+            }
+
+            for (int k = 0; k < 1; k++) {
+                // Уровень 3
+                if (!LayersConv2dSRes[j][k].empty()) {
+                    qDebug() << "      [" << j << "][" << k << "] Уровень 3: "
+                              << LayersConv2dSRes[j][k].size() << " элементов" << endl;
+                }
+
+                for (int l = 0; l < 1; l++) {
+                    // Уровень 4
+                    if (!LayersConv2dSRes[j][k][l].empty()) {
+                        qDebug() << "        [" << j << "][" << k << "][" << l << "] Уровень 4: "
+                                  << LayersConv2dSRes[j][k][l].size() << " элементов" << endl;
+                    }
+
+                    for (int m = 0; m < 1; m++) {
+                        // Уровень 5 (самый внутренний - вектор double)
+                        qDebug() << "          [" << j << "][" << k << "][" << l << "][" << m
+                                  << "] Уровень 5 (вектор double): "
+                                  << LayersConv2dSRes[j][k][l][m].size() << " элементов" << endl;
+                    }
+                }
+            }
+        }
 }
 
 
@@ -753,8 +786,9 @@ void MainWindow::printLayersBiasesSizes(const std::vector<std::vector<double>>& 
     }
 }
 void MainWindow::writeReadyModelConv2D(const std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>>& LayersConv2dSRes,
-                                 const std::vector<std::vector<double>>& biasesConv2DRes){
-    std::ofstream out_file("outputConv2D.txt");
+                                 const std::vector<std::vector<double>>& biasesConv2DRes,
+                                       std::string source){
+    std::ofstream out_file(source);
 
     for (int i = 0; i < LayersConv2dSRes.size(); i++) {
         // Запись в консоль

@@ -54,17 +54,11 @@ private:
     int stepPlant = 25;
     void drawNeurons(QGraphicsScene* anotherScene, std::vector<std::vector<double>> currentLayer, int indent, double nextEnter = 0, int plant = 25);
     std::vector<QGraphicsLineItem*> drawWeight(QGraphicsScene* anotherScene, std::vector<std::vector<std::vector<double>>> anotherMatrix, bool bothChek = false);
-    void drawStrongNeurons(std::vector<std::vector<double>> currentLaye, int indent, double nextEnter = 0, int plant = 25);
-    void compare(std::vector<std::vector<std::vector<double>>> MatrixOne, std::vector<std::vector<std::vector<double>>> MatrixTwo,
-                 std::vector<QGraphicsLineItem*> maitrisOne, std::vector<QGraphicsLineItem*> maitrisTwo);
     std::vector<std::vector<std::vector<double>>> readModel(std::string amotherSource = "model_weights_unick.txt");
     double inNumber(std::string another);
-    void clearWeight();
     bool isNumber(char other);
     std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> ListenerConv2D(std::string anotherSource, std::vector<std::vector<double>> &biasesGive);
     std::vector<std::vector<std::vector<double>>> ListenerDense(std::string anotherSource, std::vector<std::vector<double>> &biasesGive);
-    void writeConv2D(std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> matrixConv2D, std::vector<std::vector<double>> biasesGive);
-    void writeDense(std::vector<std::vector<std::vector<double>>> matrixDense, std::vector<std::vector<double>> biasesGive);
     std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> additionLayersConv2D(std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> A,
                                                                                                  std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>> B);
     std::vector<std::vector<std::vector<double>>> additionLayersDense(std::vector<std::vector<std::vector<double>>> A,
@@ -77,7 +71,7 @@ private:
     void printLayersBiasesSizes(const std::vector<std::vector<double>>& biasesRes);
 
     void writeReadyModelConv2D(const std::vector<std::vector<std::vector<std::vector<std::vector<double>>>>>& LayersConv2dSRes,
-                               const std::vector<std::vector<double>>& biasesConv2DRes);
+                               const std::vector<std::vector<double>>& biasesConv2DRes, std::string source = "outputConv2D.txt");
     void writeReadyModelDense(const std::vector<std::vector<std::vector<double>>>& denseRes,
                                const std::vector<std::vector<double>>& biasesDenseRes);
     Ui::MainWindow *ui;
